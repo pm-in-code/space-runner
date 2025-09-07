@@ -2,9 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0B0F1A">
     <title>BRAYN Space Survival</title>
     <style>
+        :root {
+            --vh: 1vh;
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -18,11 +26,27 @@
             user-select: none;
             -webkit-user-select: none;
             color: white;
+            /* Prevent zoom and ensure proper mobile display */
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-text-size-adjust: none;
+            -webkit-tap-highlight-color: transparent;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
         }
 
         canvas {
             display: block;
             background: #0B0F1A;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            touch-action: none;
         }
 
         .glass-panel {
@@ -383,9 +407,9 @@
             transition: width 0.5s;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 768px), (orientation: portrait) {
             .mobile-controls {
-                display: block;
+                display: block !important;
             }
             
             .hud-top, .hud-bottom {
@@ -394,6 +418,28 @@
             
             .quiz-options {
                 grid-template-columns: 1fr;
+            }
+            
+            /* Ensure proper mobile scaling */
+            html {
+                -webkit-text-size-adjust: none;
+                -moz-text-size-adjust: none;
+                -ms-text-size-adjust: none;
+                text-size-adjust: none;
+            }
+            
+            /* Prevent address bar issues */
+            body {
+                min-height: 100vh;
+                min-height: calc(var(--vh, 1vh) * 100);
+                min-height: -webkit-fill-available;
+            }
+        }
+        
+        /* Additional mobile viewport fixes */
+        @media screen and (max-device-width: 480px) {
+            body {
+                -webkit-text-size-adjust: none;
             }
         }
 
@@ -2568,8 +2614,52 @@
             document.getElementById(modalId).style.display = 'none';
         }
         
+        // Mobile viewport fixes
+        function fixMobileViewport() {
+            // Fix viewport height on mobile (address bar issue)
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+            
+            // Prevent zoom on double tap
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function (event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+            
+            // Prevent pinch zoom
+            document.addEventListener('gesturestart', function (e) {
+                e.preventDefault();
+            });
+            
+            document.addEventListener('gesturechange', function (e) {
+                e.preventDefault();
+            });
+            
+            document.addEventListener('gestureend', function (e) {
+                e.preventDefault();
+            });
+        }
+        
+        // Update viewport height on resize/orientation change
+        window.addEventListener('resize', () => {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        });
+        
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                let vh = window.innerHeight * 0.01;
+                document.documentElement.style.setProperty('--vh', `${vh}px`);
+            }, 100);
+        });
+        
         // Start the game when page loads
         window.addEventListener('load', () => {
+            fixMobileViewport();
             new Game();
         });
     </script>
