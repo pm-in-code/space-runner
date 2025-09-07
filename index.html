@@ -830,10 +830,10 @@
                     this.invulnerable -= deltaTime;
                 }
                 
-                // Create trail particles - DISABLED for maximum performance
-                // if (this.vel.length() > 80 && Math.random() < 0.3) {
-                //     this.createTrailParticle(game);
-                // }
+                // Create trail particles - optimized for performance
+                if (this.vel.length() > 60 && Math.random() < 0.2) {
+                    this.createTrailParticle(game);
+                }
             }
             
             createTrailParticle(game) {
@@ -955,36 +955,38 @@
                 ctx.arc(-18, 15, 1.5, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Engine glow effects - DISABLED for maximum performance
-                // if (this.vel.length() > 10) {
-                //     const glowIntensity = Math.min(this.vel.length() / this.maxSpeed, 1);
-                //     const engineColor = this.boostTime > 0 ? '#FF3FD1' : '#00BFFF';
-                //     
-                //     ctx.fillStyle = engineColor;
-                //     ctx.shadowBlur = 20 * glowIntensity;
-                //     ctx.shadowColor = engineColor;
-                //     ctx.globalAlpha = 0.8 * glowIntensity;
-                //     
-                //     // Left engine exhaust
-                //     ctx.beginPath();
-                //     ctx.ellipse(-23, -10, 4 * glowIntensity, 2 * glowIntensity, 0, 0, Math.PI * 2);
-                //     ctx.fill();
-                //     
-                //     // Right engine exhaust
-                //     ctx.beginPath();
-                //     ctx.ellipse(-23, 10, 4 * glowIntensity, 2 * glowIntensity, 0, 0, Math.PI * 2);
-                //     ctx.fill();
-                //     
-                //     // Boost mode - central thruster
-                //     if (this.boostTime > 0) {
-                //         ctx.globalAlpha = 0.9;
-                //         ctx.fillStyle = '#FFD700';
-                //         ctx.shadowColor = '#FFD700';
-                //         ctx.beginPath();
-                //         ctx.ellipse(-20, 0, 6 * glowIntensity, 3 * glowIntensity, 0, 0, Math.PI * 2);
-                //         ctx.fill();
-                //     }
-                // }
+                // Engine glow effects - simplified for performance
+                if (this.vel.length() > 15) {
+                    const glowIntensity = Math.min(this.vel.length() / this.maxSpeed, 1);
+                    const engineColor = this.boostTime > 0 ? '#FF3FD1' : '#00BFFF';
+                    
+                    ctx.fillStyle = engineColor;
+                    ctx.shadowBlur = 8 * glowIntensity;
+                    ctx.shadowColor = engineColor;
+                    ctx.globalAlpha = 0.6 * glowIntensity;
+                    
+                    // Simple engine exhaust
+                    ctx.beginPath();
+                    ctx.ellipse(-23, -10, 3 * glowIntensity, 1.5 * glowIntensity, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.ellipse(-23, 10, 3 * glowIntensity, 1.5 * glowIntensity, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Boost mode - central thruster
+                    if (this.boostTime > 0) {
+                        ctx.globalAlpha = 0.7;
+                        ctx.fillStyle = '#FFD700';
+                        ctx.shadowColor = '#FFD700';
+                        ctx.beginPath();
+                        ctx.ellipse(-20, 0, 4 * glowIntensity, 2 * glowIntensity, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    ctx.shadowBlur = 0;
+                    ctx.globalAlpha = 1;
+                }
                 
                 ctx.restore();
             }
@@ -1133,8 +1135,16 @@
                 //     ctx.globalAlpha = 1;
                 // }
                 
-                // Draw main meteor body - simplified for performance
-                ctx.fillStyle = colors.main;
+                // Draw main meteor body with simple gradient
+                const bodyGradient = ctx.createRadialGradient(
+                    -this.radius * 0.2, -this.radius * 0.2, 0,
+                    0, 0, this.radius
+                );
+                bodyGradient.addColorStop(0, colors.highlight);
+                bodyGradient.addColorStop(0.7, colors.main);
+                bodyGradient.addColorStop(1, colors.shadow);
+                
+                ctx.fillStyle = bodyGradient;
                 ctx.strokeStyle = colors.edge;
                 ctx.lineWidth = 1.5;
                 
@@ -1152,53 +1162,46 @@
                 ctx.fill();
                 ctx.stroke();
                 
-                // Draw surface craters for texture - DISABLED for performance
-                // ctx.fillStyle = colors.crater;
-                // ctx.globalAlpha = 0.6;
-                // this.craters.forEach(crater => {
-                //     ctx.beginPath();
-                //     ctx.arc(crater.x, crater.y, crater.size, 0, Math.PI * 2);
-                //     ctx.fill();
-                // });
-                // ctx.globalAlpha = 1;
+                // Draw surface craters for texture - optimized (fewer craters)
+                ctx.fillStyle = colors.crater;
+                ctx.globalAlpha = 0.5;
+                // Only draw first 3 craters for performance
+                for (let i = 0; i < Math.min(3, this.craters.length); i++) {
+                    const crater = this.craters[i];
+                    ctx.beginPath();
+                    ctx.arc(crater.x, crater.y, crater.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
                 
-                // Draw bright spots (mineral veins) - DISABLED for performance
-                // if (this.meteorType === 'iron' || Math.random() < 0.3) {
-                //     ctx.fillStyle = colors.vein;
-                //     ctx.globalAlpha = 0.8;
-                //     for (let i = 0; i < 2; i++) {
-                //         const veinX = (Math.random() - 0.5) * this.radius * 0.8;
-                //         const veinY = (Math.random() - 0.5) * this.radius * 0.8;
-                //         ctx.beginPath();
-                //         ctx.arc(veinX, veinY, 1 + Math.random(), 0, Math.PI * 2);
-                //         ctx.fill();
-                //     }
-                //     ctx.globalAlpha = 1;
-                // }
+                // Draw bright spots (mineral veins) - only for iron meteors, optimized
+                if (this.meteorType === 'iron' && Math.random() < 0.4) {
+                    ctx.fillStyle = colors.vein;
+                    ctx.globalAlpha = 0.7;
+                    // Only 1 vein for performance
+                    const veinX = (Math.random() - 0.5) * this.radius * 0.6;
+                    const veinY = (Math.random() - 0.5) * this.radius * 0.6;
+                    ctx.beginPath();
+                    ctx.arc(veinX, veinY, 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
                 
-                // Heat glow on the surface for fast meteors - DISABLED for performance
-                // if (this.heatGlow > 0.5) {
-                //     ctx.globalAlpha = this.heatGlow * 0.6;
-                //     ctx.strokeStyle = colors.heat;
-                //     ctx.lineWidth = 2;
-                //     ctx.shadowBlur = 8;
-                //     ctx.shadowColor = colors.heat;
-                //     
-                //     ctx.beginPath();
-                //     for (let i = 0; i < this.vertices.length; i++) {
-                //         const vertex = this.vertices[i];
-                //         if (i === 0) {
-                //             ctx.moveTo(vertex.x, vertex.y);
-                //         } else {
-                //             ctx.lineTo(vertex.x, vertex.y);
-                //         }
-                //     }
-                //     ctx.closePath();
-                //     ctx.stroke();
-                //     
-                //     ctx.shadowBlur = 0;
-                //     ctx.globalAlpha = 1;
-                // }
+                // Heat glow on the surface for very fast meteors - simplified
+                if (this.heatGlow > 0.7) {
+                    ctx.globalAlpha = this.heatGlow * 0.4;
+                    ctx.strokeStyle = colors.heat;
+                    ctx.lineWidth = 1.5;
+                    ctx.shadowBlur = 4;
+                    ctx.shadowColor = colors.heat;
+                    
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius * 0.9, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    ctx.shadowBlur = 0;
+                    ctx.globalAlpha = 1;
+                }
                 
                 ctx.restore();
             }
@@ -1207,36 +1210,36 @@
                 switch (this.meteorType) {
                     case 'rock':
                         return {
-                            main: '#8B4513',
-                            highlight: '#CD853F',
-                            shadow: '#654321',
-                            edge: '#A0522D',
-                            crater: '#2F1B14',
-                            vein: '#DAA520',
+                            main: '#4A4A4A',        // Dark gray-brown
+                            highlight: '#8B7355',   // Lighter brown
+                            shadow: '#2C2C2C',      // Very dark
+                            edge: '#6B5B47',        // Medium brown
+                            crater: '#1A1A1A',      // Deep black
+                            vein: '#B8860B',        // Dark goldenrod
                             glow: 'rgba(255, 69, 0, 0.8)',
                             glowMid: 'rgba(255, 140, 0, 0.4)',
                             heat: '#FF4500'
                         };
                     case 'iron':
                         return {
-                            main: '#708090',
-                            highlight: '#C0C0C0',
-                            shadow: '#2F4F4F',
-                            edge: '#696969',
-                            crater: '#1C1C1C',
-                            vein: '#E6E6FA',
+                            main: '#5A5A5A',        // Dark metallic gray
+                            highlight: '#B8B8B8',   // Light silver
+                            shadow: '#2A2A2A',      // Very dark gray
+                            edge: '#808080',        // Medium gray
+                            crater: '#1A1A1A',      // Deep black
+                            vein: '#FFD700',        // Gold
                             glow: 'rgba(255, 215, 0, 0.8)',
                             glowMid: 'rgba(255, 165, 0, 0.4)',
                             heat: '#FFD700'
                         };
                     case 'ice':
                         return {
-                            main: '#B0E0E6',
-                            highlight: '#F0F8FF',
-                            shadow: '#4682B4',
-                            edge: '#87CEEB',
-                            crater: '#1E90FF',
-                            vein: '#00BFFF',
+                            main: '#8FA8B8',        // Blue-gray
+                            highlight: '#E6F3FF',   // Very light blue
+                            shadow: '#4A6B7A',      // Dark blue-gray
+                            edge: '#A8C8D8',        // Medium blue
+                            crater: '#2C4A5A',      // Deep blue
+                            vein: '#00BFFF',        // Deep sky blue
                             glow: 'rgba(135, 206, 235, 0.6)',
                             glowMid: 'rgba(176, 224, 230, 0.3)',
                             heat: '#87CEEB'
@@ -2228,16 +2231,14 @@
                     return true;
                 });
                 
-                // Update particles - DISABLED for maximum performance
-                // if (this.debug.particles) {
-                //     this.particlePool.active = this.particlePool.active.filter(particle => {
-                //         if (!particle.update(this.deltaTime)) {
-                //             this.particlePool.release(particle);
-                //             return false;
-                //         }
-                //         return true;
-                //     });
-                // }
+                // Update particles - enabled for ship trails
+                this.particlePool.active = this.particlePool.active.filter(particle => {
+                    if (!particle.update(this.deltaTime)) {
+                        this.particlePool.release(particle);
+                        return false;
+                    }
+                    return true;
+                });
                 
                 // Check collisions
                 this.checkCollisions();
@@ -2308,7 +2309,7 @@
             }
             
             handleMeteorCollision(meteor) {
-                // meteor.createDebris(this); // DISABLED for maximum performance
+                meteor.createDebris(this); // Re-enabled with optimized debris
                 this.meteorPool.release(meteor);
                 this.showQuiz();
             }
@@ -2323,16 +2324,16 @@
                     this.lives++;
                 }
                 
-                // Create collection effect - DISABLED for maximum performance
-                // for (let i = 0; i < 5; i++) {
-                //     const particle = this.particlePool.get();
-                //     const angle = (i / 5) * Math.PI * 2;
-                //     particle.pos.set(bonus.pos.x, bonus.pos.y);
-                //     particle.vel.set(Math.cos(angle) * 150, Math.sin(angle) * 150);
-                //     particle.life = particle.maxLife = 0.5;
-                //     particle.size = 3;
-                //     particle.color = bonus.type === 'boost' ? '#FF3FD1' : '#22E1FF';
-                // }
+                // Create collection effect - simplified for performance
+                for (let i = 0; i < 3; i++) { // Reduced from 5 to 3
+                    const particle = this.particlePool.get();
+                    const angle = (i / 3) * Math.PI * 2;
+                    particle.pos.set(bonus.pos.x, bonus.pos.y);
+                    particle.vel.set(Math.cos(angle) * 100, Math.sin(angle) * 100); // Reduced speed
+                    particle.life = particle.maxLife = 0.4; // Shorter life
+                    particle.size = 2; // Smaller size
+                    particle.color = bonus.type === 'boost' ? '#FF3FD1' : '#22E1FF';
+                }
                 
                 this.bonusPool.release(bonus);
             }
@@ -2409,13 +2410,11 @@
                     }
                 });
                 
-                // Draw particles
-                if (this.debug.particles) {
-                    this.particlePool.active.forEach(particle => {
-                        particle.draw(this.ctx);
-                        drawCalls++;
-                    });
-                }
+                // Draw particles - enabled for ship trails
+                this.particlePool.active.forEach(particle => {
+                    particle.draw(this.ctx);
+                    drawCalls++;
+                });
                 
                 // Draw player
                 this.player.draw(this.ctx);
