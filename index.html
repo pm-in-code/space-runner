@@ -701,7 +701,7 @@
                 this.acceleration = 800;
                 this.maxSpeed = 300;
                 this.friction = 0.85;
-                this.radius = 25;
+                this.radius = 40; // Much bigger for debugging
                 this.angle = 0;
                 this.boostTime = 0;
                 this.invulnerable = 0;
@@ -797,22 +797,26 @@
                 ctx.translate(this.pos.x, this.pos.y);
                 ctx.rotate(this.angle);
                 
-                // Ship body - make it bigger and more visible
-                ctx.strokeStyle = this.boostTime > 0 ? '#FF3FD1' : '#22E1FF';
-                ctx.fillStyle = this.boostTime > 0 ? 'rgba(255, 63, 209, 0.3)' : 'rgba(34, 225, 255, 0.3)';
-                ctx.lineWidth = 4;
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = ctx.strokeStyle;
+                // Ship body - make it EXTREMELY visible for debugging
+                ctx.strokeStyle = '#FFFFFF'; // Pure white for maximum visibility
+                ctx.fillStyle = 'rgba(255, 255, 0, 0.8)'; // Bright yellow
+                ctx.lineWidth = 6; // Even thicker lines
+                ctx.shadowBlur = 30; // Bigger glow
+                ctx.shadowColor = '#FFFFFF';
                 
-                // Main ship triangle - larger
+                // Main ship triangle - MUCH larger for debugging
                 ctx.beginPath();
-                ctx.moveTo(25, 0);  // Nose
-                ctx.lineTo(-15, -12); // Left wing
-                ctx.lineTo(-8, 0);   // Center back
-                ctx.lineTo(-15, 12); // Right wing
+                ctx.moveTo(40, 0);  // Nose - much further out
+                ctx.lineTo(-25, -20); // Left wing - bigger
+                ctx.lineTo(-15, 0);   // Center back
+                ctx.lineTo(-25, 20); // Right wing - bigger
                 ctx.closePath();
                 ctx.fill();
                 ctx.stroke();
+                
+                // Add a simple rectangle for absolute visibility
+                ctx.fillStyle = '#FF0000'; // Bright red
+                ctx.fillRect(-20, -15, 40, 30);
                 
                 // Ship core glow
                 ctx.fillStyle = ctx.strokeStyle;
@@ -2285,6 +2289,25 @@
                 // Draw player
                 this.player.draw(this.ctx);
                 drawCalls++;
+                
+                // Debug: Always show player position with bright circle
+                if (this.debug.overlay || true) { // Always show for debugging
+                    this.ctx.save();
+                    this.ctx.strokeStyle = '#FF0000';
+                    this.ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.player.pos.x, this.player.pos.y, this.player.radius + 5, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                    this.ctx.fill();
+                    
+                    // Show coordinates
+                    this.ctx.fillStyle = '#FFFFFF';
+                    this.ctx.font = '12px Arial';
+                    this.ctx.fillText(`Ship: ${Math.round(this.player.pos.x)}, ${Math.round(this.player.pos.y)}`, 
+                                     this.player.pos.x + 30, this.player.pos.y);
+                    this.ctx.restore();
+                }
                 
                 if (this.debug.collisions) {
                     this.drawCollisionCircle(this.player.getCollisionCircle(), '#FFFFFF');
