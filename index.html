@@ -878,20 +878,43 @@
                 this.angularVel = 0;
                 this.radius = 20;
                 this.vertices = [];
+                this.craters = [];
+                this.trailParticles = [];
+                this.heatGlow = 0;
+                this.meteorType = 'rock'; // 'rock', 'iron', 'ice'
                 this.generateShape();
             }
             
             generateShape() {
                 this.vertices = [];
-                const numVertices = 6 + Math.floor(Math.random() * 4);
+                this.craters = [];
+                
+                // Generate irregular rocky shape
+                const numVertices = 8 + Math.floor(Math.random() * 6);
                 for (let i = 0; i < numVertices; i++) {
                     const angle = (i / numVertices) * Math.PI * 2;
-                    const variance = 0.7 + Math.random() * 0.3;
+                    const variance = 0.6 + Math.random() * 0.4;
                     this.vertices.push({
                         x: Math.cos(angle) * this.radius * variance,
                         y: Math.sin(angle) * this.radius * variance
                     });
                 }
+                
+                // Generate surface craters for realism
+                const numCraters = 3 + Math.floor(Math.random() * 4);
+                for (let i = 0; i < numCraters; i++) {
+                    const craterAngle = Math.random() * Math.PI * 2;
+                    const craterDistance = Math.random() * this.radius * 0.6;
+                    this.craters.push({
+                        x: Math.cos(craterAngle) * craterDistance,
+                        y: Math.sin(craterAngle) * craterDistance,
+                        size: 2 + Math.random() * 4
+                    });
+                }
+                
+                // Random meteor type affects color and effects
+                const types = ['rock', 'iron', 'ice'];
+                this.meteorType = types[Math.floor(Math.random() * types.length)];
             }
             
             init(x, y, vx, vy, size) {
@@ -903,13 +926,56 @@
                 this.generateShape();
             }
             
-            update(deltaTime) {
+            update(deltaTime, game) {
                 this.pos.add(new Vector2(this.vel.x * deltaTime, this.vel.y * deltaTime));
                 this.angle += this.angularVel * deltaTime;
+                
+                // Update heat glow based on speed
+                const speed = this.vel.length();
+                this.heatGlow = Math.min(speed / 200, 1);
+                
+                // Create atmospheric trail particles
+                if (speed > 50 && Math.random() < 0.8) {
+                    this.createTrailParticle(game);
+                }
                 
                 // Remove if off screen
                 return this.pos.x > -100 && this.pos.x < window.innerWidth + 100 &&
                        this.pos.y > -100 && this.pos.y < window.innerHeight + 100;
+            }
+            
+            createTrailParticle(game) {
+                if (!game || !game.particlePool) return;
+                
+                const particle = game.particlePool.get();
+                const trailOffset = 15 + Math.random() * 10;
+                
+                // Position behind the meteor
+                const trailX = this.pos.x - (this.vel.x / this.vel.length()) * trailOffset;
+                const trailY = this.pos.y - (this.vel.y / this.vel.length()) * trailOffset;
+                
+                particle.pos.set(
+                    trailX + (Math.random() - 0.5) * this.radius,
+                    trailY + (Math.random() - 0.5) * this.radius
+                );
+                
+                // Particle velocity with some randomness
+                particle.vel.set(
+                    this.vel.x * 0.1 + (Math.random() - 0.5) * 50,
+                    this.vel.y * 0.1 + (Math.random() - 0.5) * 50
+                );
+                
+                particle.life = particle.maxLife = 0.8 + Math.random() * 0.4;
+                particle.size = 1 + Math.random() * 3;
+                
+                // Color based on meteor type and heat
+                if (this.meteorType === 'ice') {
+                    particle.color = Math.random() < 0.7 ? '#B0E0E6' : '#87CEEB';
+                } else {
+                    // Hot fiery colors for rock and iron
+                    const colors = ['#FF4500', '#FF6347', '#FFA500', '#FFD700', '#FF8C00'];
+                    particle.color = colors[Math.floor(Math.random() * colors.length)];
+                }
             }
             
             draw(ctx) {
@@ -917,12 +983,40 @@
                 ctx.translate(this.pos.x, this.pos.y);
                 ctx.rotate(this.angle);
                 
-                ctx.strokeStyle = '#5B8CFF';
-                ctx.fillStyle = 'rgba(91, 140, 255, 0.1)';
-                ctx.lineWidth = 2;
-                ctx.shadowBlur = 8;
-                ctx.shadowColor = '#5B8CFF';
+                // Get meteor colors based on type
+                const colors = this.getMeteorColors();
                 
+                // Draw atmospheric glow/heating effect
+                if (this.heatGlow > 0.3) {
+                    ctx.globalAlpha = this.heatGlow * 0.8;
+                    const glowSize = this.radius * (1.5 + this.heatGlow * 0.5);
+                    
+                    const glowGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
+                    glowGradient.addColorStop(0, colors.glow);
+                    glowGradient.addColorStop(0.7, colors.glowMid);
+                    glowGradient.addColorStop(1, 'transparent');
+                    
+                    ctx.fillStyle = glowGradient;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, glowSize, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+                
+                // Draw main meteor body with gradient
+                const bodyGradient = ctx.createRadialGradient(
+                    -this.radius * 0.3, -this.radius * 0.3, 0,
+                    0, 0, this.radius
+                );
+                bodyGradient.addColorStop(0, colors.highlight);
+                bodyGradient.addColorStop(0.4, colors.main);
+                bodyGradient.addColorStop(1, colors.shadow);
+                
+                ctx.fillStyle = bodyGradient;
+                ctx.strokeStyle = colors.edge;
+                ctx.lineWidth = 1.5;
+                
+                // Draw irregular meteor shape
                 ctx.beginPath();
                 for (let i = 0; i < this.vertices.length; i++) {
                     const vertex = this.vertices[i];
@@ -936,20 +1030,141 @@
                 ctx.fill();
                 ctx.stroke();
                 
+                // Draw surface craters for texture
+                ctx.fillStyle = colors.crater;
+                ctx.globalAlpha = 0.6;
+                this.craters.forEach(crater => {
+                    ctx.beginPath();
+                    ctx.arc(crater.x, crater.y, crater.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.globalAlpha = 1;
+                
+                // Draw bright spots (mineral veins) for some meteor types
+                if (this.meteorType === 'iron' || Math.random() < 0.3) {
+                    ctx.fillStyle = colors.vein;
+                    ctx.globalAlpha = 0.8;
+                    for (let i = 0; i < 2; i++) {
+                        const veinX = (Math.random() - 0.5) * this.radius * 0.8;
+                        const veinY = (Math.random() - 0.5) * this.radius * 0.8;
+                        ctx.beginPath();
+                        ctx.arc(veinX, veinY, 1 + Math.random(), 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.globalAlpha = 1;
+                }
+                
+                // Heat glow on the surface for fast meteors
+                if (this.heatGlow > 0.5) {
+                    ctx.globalAlpha = this.heatGlow * 0.6;
+                    ctx.strokeStyle = colors.heat;
+                    ctx.lineWidth = 2;
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = colors.heat;
+                    
+                    ctx.beginPath();
+                    for (let i = 0; i < this.vertices.length; i++) {
+                        const vertex = this.vertices[i];
+                        if (i === 0) {
+                            ctx.moveTo(vertex.x, vertex.y);
+                        } else {
+                            ctx.lineTo(vertex.x, vertex.y);
+                        }
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                    
+                    ctx.shadowBlur = 0;
+                    ctx.globalAlpha = 1;
+                }
+                
                 ctx.restore();
             }
             
+            getMeteorColors() {
+                switch (this.meteorType) {
+                    case 'rock':
+                        return {
+                            main: '#8B4513',
+                            highlight: '#CD853F',
+                            shadow: '#654321',
+                            edge: '#A0522D',
+                            crater: '#2F1B14',
+                            vein: '#DAA520',
+                            glow: 'rgba(255, 69, 0, 0.8)',
+                            glowMid: 'rgba(255, 140, 0, 0.4)',
+                            heat: '#FF4500'
+                        };
+                    case 'iron':
+                        return {
+                            main: '#708090',
+                            highlight: '#C0C0C0',
+                            shadow: '#2F4F4F',
+                            edge: '#696969',
+                            crater: '#1C1C1C',
+                            vein: '#E6E6FA',
+                            glow: 'rgba(255, 215, 0, 0.8)',
+                            glowMid: 'rgba(255, 165, 0, 0.4)',
+                            heat: '#FFD700'
+                        };
+                    case 'ice':
+                        return {
+                            main: '#B0E0E6',
+                            highlight: '#F0F8FF',
+                            shadow: '#4682B4',
+                            edge: '#87CEEB',
+                            crater: '#1E90FF',
+                            vein: '#00BFFF',
+                            glow: 'rgba(135, 206, 235, 0.6)',
+                            glowMid: 'rgba(176, 224, 230, 0.3)',
+                            heat: '#87CEEB'
+                        };
+                    default:
+                        return this.getMeteorColors.call({meteorType: 'rock'});
+                }
+            }
+            
             createDebris(game) {
-                for (let i = 0; i < 8; i++) {
+                const colors = this.getMeteorColors();
+                const numDebris = 12 + Math.floor(Math.random() * 6);
+                
+                for (let i = 0; i < numDebris; i++) {
                     const particle = game.particlePool.get();
-                    const angle = (i / 8) * Math.PI * 2 + Math.random() * 0.5;
-                    const speed = 100 + Math.random() * 200;
+                    const angle = (i / numDebris) * Math.PI * 2 + Math.random() * 0.8;
+                    const speed = 80 + Math.random() * 250;
                     
-                    particle.pos.set(this.pos.x, this.pos.y);
+                    particle.pos.set(
+                        this.pos.x + (Math.random() - 0.5) * this.radius,
+                        this.pos.y + (Math.random() - 0.5) * this.radius
+                    );
                     particle.vel.set(Math.cos(angle) * speed, Math.sin(angle) * speed);
-                    particle.life = particle.maxLife = 1 + Math.random();
-                    particle.size = 2 + Math.random() * 4;
-                    particle.color = '#5B8CFF';
+                    particle.life = particle.maxLife = 1.2 + Math.random() * 1.5;
+                    particle.size = 1 + Math.random() * 5;
+                    
+                    // Realistic debris colors based on meteor type
+                    if (this.meteorType === 'rock') {
+                        const debrisColors = [colors.main, colors.shadow, colors.edge, '#A0522D'];
+                        particle.color = debrisColors[Math.floor(Math.random() * debrisColors.length)];
+                    } else if (this.meteorType === 'iron') {
+                        const debrisColors = [colors.main, colors.highlight, '#696969', '#2F4F4F'];
+                        particle.color = debrisColors[Math.floor(Math.random() * debrisColors.length)];
+                    } else { // ice
+                        const debrisColors = [colors.main, colors.highlight, '#87CEEB', '#4682B4'];
+                        particle.color = debrisColors[Math.floor(Math.random() * debrisColors.length)];
+                    }
+                }
+                
+                // Add some hot sparks for dramatic effect
+                for (let i = 0; i < 5; i++) {
+                    const spark = game.particlePool.get();
+                    const sparkAngle = Math.random() * Math.PI * 2;
+                    const sparkSpeed = 200 + Math.random() * 300;
+                    
+                    spark.pos.set(this.pos.x, this.pos.y);
+                    spark.vel.set(Math.cos(sparkAngle) * sparkSpeed, Math.sin(sparkAngle) * sparkSpeed);
+                    spark.life = spark.maxLife = 0.3 + Math.random() * 0.5;
+                    spark.size = 0.5 + Math.random() * 2;
+                    spark.color = Math.random() < 0.5 ? '#FFA500' : '#FFD700';
                 }
             }
             
@@ -1862,7 +2077,7 @@
                 
                 // Update meteors
                 this.meteorPool.active = this.meteorPool.active.filter(meteor => {
-                    if (!meteor.update(this.deltaTime)) {
+                    if (!meteor.update(this.deltaTime, this)) {
                         this.meteorPool.release(meteor);
                         return false;
                     }
