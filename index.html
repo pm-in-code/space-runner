@@ -705,9 +705,11 @@
                 // Update position
                 this.pos.add(new Vector2(this.vel.x * deltaTime, this.vel.y * deltaTime));
                 
-                // Keep in bounds
+                // Keep in bounds - restrict player to bottom third of screen
                 this.pos.x = Math.max(this.radius, Math.min(game.canvas.width - this.radius, this.pos.x));
-                this.pos.y = Math.max(this.radius, Math.min(game.canvas.height - this.radius, this.pos.y));
+                const minY = game.canvas.height * 0.65; // Bottom third of screen
+                const maxY = game.canvas.height - this.radius;
+                this.pos.y = Math.max(minY, Math.min(maxY, this.pos.y));
                 
                 // Update invulnerability
                 if (this.invulnerable > 0) {
@@ -1397,7 +1399,7 @@
                 this.mobile = this.detectMobile();
                 
                 // Game objects
-                this.player = new Player(this.canvas.width / 2, this.canvas.height - 100);
+                this.player = new Player(window.innerWidth / 2, window.innerHeight - 80);
                 this.rng = new RNG();
                 
                 // Object pools
@@ -1446,10 +1448,12 @@
                     
                     this.ctx.scale(dpr, dpr);
                     
-                    // Update player position if needed
+                    // Update player position if needed - keep in bottom area
                     if (this.player) {
                         this.player.pos.x = Math.min(this.player.pos.x, window.innerWidth - this.player.radius);
-                        this.player.pos.y = Math.min(this.player.pos.y, window.innerHeight - this.player.radius);
+                        const minY = window.innerHeight * 0.65;
+                        const maxY = window.innerHeight - this.player.radius;
+                        this.player.pos.y = Math.max(minY, Math.min(maxY, this.player.pos.y));
                     }
                 };
                 
@@ -1821,8 +1825,8 @@
                 meteor.init(
                     this.rng.range(-50, this.canvas.width + 50),
                     -50,
-                    this.rng.range(-50, 50),
-                    speed,
+                    this.rng.range(-20, 20), // Small horizontal drift
+                    speed, // Vertical speed downward
                     size
                 );
             }
