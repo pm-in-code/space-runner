@@ -55,6 +55,48 @@
             gap: 15px;
             flex-wrap: wrap;
             z-index: 10;
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+
+        .hud-bottom.hidden {
+            transform: translateY(100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(34, 225, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid #22E1FF;
+            border-radius: 50%;
+            color: #22E1FF;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 15;
+            transition: all 0.2s;
+            box-shadow: 0 0 20px rgba(34, 225, 255, 0.3);
+        }
+
+        .menu-toggle:hover {
+            background: rgba(34, 225, 255, 0.3);
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(34, 225, 255, 0.5);
+        }
+
+        .menu-toggle.menu-open {
+            background: rgba(255, 63, 209, 0.2);
+            border-color: #FF3FD1;
+            color: #FF3FD1;
+            box-shadow: 0 0 20px rgba(255, 63, 209, 0.3);
         }
 
         .timer {
@@ -410,7 +452,10 @@
         </div>
     </div>
 
-    <div class="glass-panel hud-bottom">
+    <!-- Menu Toggle Button -->
+    <button class="menu-toggle" id="menuToggle" title="Open Menu (M)">☰</button>
+
+    <div class="glass-panel hud-bottom hidden" id="bottomMenu">
         <button class="btn btn-cyan" id="pauseBtn">Pause (P)</button>
         <button class="btn btn-blue" id="settingsBtn">Settings</button>
         <button class="btn btn-purple" id="helpBtn">How to Play</button>
@@ -1606,6 +1651,10 @@
                 
                 this.updateUI();
                 
+                // Menu toggle functionality
+                this.menuOpen = false;
+                document.getElementById('menuToggle').onclick = () => this.toggleMenu();
+                
                 // Button handlers
                 document.getElementById('pauseBtn').onclick = () => this.togglePause();
                 document.getElementById('settingsBtn').onclick = () => this.openModal('settingsModal');
@@ -1690,6 +1739,10 @@
                         break;
                     case 'p':
                         this.togglePause();
+                        break;
+                    case 'm':
+                    case 'escape':
+                        this.toggleMenu();
                         break;
                     case 'd':
                         if (e.key === 'd') { // Only lowercase d for debug
@@ -2093,6 +2146,24 @@
                     this.pauseGame();
                 } else if (this.state === 'paused') {
                     this.resumeGame();
+                }
+            }
+            
+            toggleMenu() {
+                this.menuOpen = !this.menuOpen;
+                const bottomMenu = document.getElementById('bottomMenu');
+                const menuToggle = document.getElementById('menuToggle');
+                
+                if (this.menuOpen) {
+                    bottomMenu.classList.remove('hidden');
+                    menuToggle.classList.add('menu-open');
+                    menuToggle.innerHTML = '✕';
+                    menuToggle.title = 'Close Menu (M)';
+                } else {
+                    bottomMenu.classList.add('hidden');
+                    menuToggle.classList.remove('menu-open');
+                    menuToggle.innerHTML = '☰';
+                    menuToggle.title = 'Open Menu (M)';
                 }
             }
             
