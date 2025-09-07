@@ -233,46 +233,55 @@
 
         .virtual-stick {
             position: absolute;
-            left: 30px;
-            bottom: 30px;
-            width: 120px;
-            height: 120px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            left: 20px;
+            bottom: 20px;
+            width: 180px;
+            height: 180px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 3px solid rgba(34, 225, 255, 0.5);
             border-radius: 50%;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 0 30px rgba(34, 225, 255, 0.3);
         }
 
         .stick-knob {
-            width: 40px;
-            height: 40px;
-            background: #22E1FF;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(145deg, #22E1FF, #1BA3CC);
+            border: 2px solid #FFFFFF;
             border-radius: 50%;
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 20px #22E1FF;
+            box-shadow: 0 0 25px #22E1FF, inset 0 2px 5px rgba(255,255,255,0.3);
             transition: all 0.1s;
+            cursor: pointer;
         }
 
         .boost-btn {
             position: absolute;
-            right: 30px;
-            bottom: 30px;
-            width: 80px;
-            height: 80px;
+            right: 20px;
+            bottom: 20px;
+            width: 120px;
+            height: 120px;
             background: rgba(255, 63, 209, 0.3);
-            border: 3px solid #FF3FD1;
+            border: 4px solid #FF3FD1;
             border-radius: 50%;
             color: #FF3FD1;
-            font-size: 24px;
+            font-size: 32px;
             cursor: pointer;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 30px rgba(255, 63, 209, 0.5);
+            box-shadow: 0 0 40px rgba(255, 63, 209, 0.6);
+            transition: all 0.2s;
+        }
+        
+        .boost-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 50px rgba(255, 63, 209, 0.8);
         }
 
         .modal {
@@ -1873,7 +1882,7 @@
                 const boostBtn = document.getElementById('boostBtn');
                 
                 let stickActive = false;
-                let stickCenter = { x: 60, y: 60 };
+                let stickCenter = { x: 90, y: 90 }; // Center of 180px joystick
                 
                 const getEventPos = (e) => {
                     const touch = e.touches ? e.touches[0] : e;
@@ -1888,7 +1897,7 @@
                     const dx = pos.x - stickCenter.x;
                     const dy = pos.y - stickCenter.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
-                    const maxDistance = 40;
+                    const maxDistance = 60; // Larger movement area for 180px joystick
                     
                     if (distance > maxDistance) {
                         const angle = Math.atan2(dy, dx);
@@ -1896,8 +1905,8 @@
                         pos.y = stickCenter.y + Math.sin(angle) * maxDistance;
                     }
                     
-                    knob.style.left = (pos.x - 20) + 'px';
-                    knob.style.top = (pos.y - 20) + 'px';
+                    knob.style.left = (pos.x - 30) + 'px'; // Center 60px knob
+                    knob.style.top = (pos.y - 30) + 'px';
                     
                     // Update input with stricter deadzone to prevent edge cases
                     const normalizedX = (pos.x - stickCenter.x) / maxDistance;
@@ -1911,8 +1920,8 @@
                 };
                 
                 const resetStick = () => {
-                    knob.style.left = '40px';
-                    knob.style.top = '40px';
+                    knob.style.left = '60px'; // Center position for 180px stick (90-30)
+                    knob.style.top = '60px';
                     this.input.left = this.input.right = this.input.up = this.input.down = false;
                 };
                 
