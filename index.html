@@ -701,7 +701,7 @@
                 this.acceleration = 800;
                 this.maxSpeed = 300;
                 this.friction = 0.85;
-                this.radius = 40; // Much bigger for debugging
+                this.radius = 30; // Good visible size
                 this.angle = 0;
                 this.boostTime = 0;
                 this.invulnerable = 0;
@@ -751,9 +751,10 @@
                 this.pos.add(new Vector2(this.vel.x * deltaTime, this.vel.y * deltaTime));
                 
                 // Keep in bounds - restrict player to bottom third of screen
-                this.pos.x = Math.max(this.radius, Math.min(game.canvas.width - this.radius, this.pos.x));
-                const minY = game.canvas.height * 0.65; // Bottom third of screen
-                const maxY = game.canvas.height - this.radius;
+                // Use window dimensions (logical pixels) not canvas dimensions (physical pixels)
+                this.pos.x = Math.max(this.radius, Math.min(window.innerWidth - this.radius, this.pos.x));
+                const minY = window.innerHeight * 0.65; // Bottom third of screen
+                const maxY = window.innerHeight - this.radius;
                 this.pos.y = Math.max(minY, Math.min(maxY, this.pos.y));
                 
                 // Update invulnerability
@@ -797,26 +798,22 @@
                 ctx.translate(this.pos.x, this.pos.y);
                 ctx.rotate(this.angle);
                 
-                // Ship body - make it EXTREMELY visible for debugging
-                ctx.strokeStyle = '#FFFFFF'; // Pure white for maximum visibility
-                ctx.fillStyle = 'rgba(255, 255, 0, 0.8)'; // Bright yellow
-                ctx.lineWidth = 6; // Even thicker lines
-                ctx.shadowBlur = 30; // Bigger glow
-                ctx.shadowColor = '#FFFFFF';
+                // Ship body - bright and visible
+                ctx.strokeStyle = this.boostTime > 0 ? '#FF3FD1' : '#22E1FF';
+                ctx.fillStyle = this.boostTime > 0 ? 'rgba(255, 63, 209, 0.6)' : 'rgba(34, 225, 255, 0.6)';
+                ctx.lineWidth = 5; // Thick lines for visibility
+                ctx.shadowBlur = 25; // Strong glow
+                ctx.shadowColor = ctx.strokeStyle;
                 
-                // Main ship triangle - MUCH larger for debugging
+                // Main ship triangle - well sized and visible
                 ctx.beginPath();
-                ctx.moveTo(40, 0);  // Nose - much further out
-                ctx.lineTo(-25, -20); // Left wing - bigger
-                ctx.lineTo(-15, 0);   // Center back
-                ctx.lineTo(-25, 20); // Right wing - bigger
+                ctx.moveTo(30, 0);  // Nose
+                ctx.lineTo(-20, -15); // Left wing
+                ctx.lineTo(-12, 0);   // Center back
+                ctx.lineTo(-20, 15); // Right wing
                 ctx.closePath();
                 ctx.fill();
                 ctx.stroke();
-                
-                // Add a simple rectangle for absolute visibility
-                ctx.fillStyle = '#FF0000'; // Bright red
-                ctx.fillRect(-20, -15, 40, 30);
                 
                 // Ship core glow
                 ctx.fillStyle = ctx.strokeStyle;
@@ -1688,8 +1685,8 @@
                 };
                 this.mobile = this.detectMobile();
                 
-                // Game objects
-                this.player = new Player(window.innerWidth / 2, window.innerHeight - 80);
+                // Game objects - will be positioned correctly after canvas setup
+                this.player = new Player(0, 0); // Temporary position
                 this.rng = new RNG();
                 
                 // Object pools
@@ -1738,12 +1735,20 @@
                     
                     this.ctx.scale(dpr, dpr);
                     
-                    // Update player position if needed - keep in bottom area
+                    // Update player position - use logical canvas size, not physical pixels
                     if (this.player) {
-                        this.player.pos.x = Math.min(this.player.pos.x, window.innerWidth - this.player.radius);
-                        const minY = window.innerHeight * 0.65;
-                        const maxY = window.innerHeight - this.player.radius;
-                        this.player.pos.y = Math.max(minY, Math.min(maxY, this.player.pos.y));
+                        // First time setup or window resize
+                        if (this.player.pos.x === 0 && this.player.pos.y === 0) {
+                            // Initial positioning - center horizontally, bottom area vertically
+                            this.player.pos.x = window.innerWidth / 2;
+                            this.player.pos.y = window.innerHeight - 80;
+                        } else {
+                            // Keep within bounds during resize
+                            this.player.pos.x = Math.min(this.player.pos.x, window.innerWidth - this.player.radius);
+                            const minY = window.innerHeight * 0.65;
+                            const maxY = window.innerHeight - this.player.radius;
+                            this.player.pos.y = Math.max(minY, Math.min(maxY, this.player.pos.y));
+                        }
                     }
                 };
                 
@@ -2121,7 +2126,7 @@
                 const speed = (100 + this.rng.range(0, 100)) * this.speedMultiplier;
                 
                 meteor.init(
-                    this.rng.range(-50, this.canvas.width + 50),
+                    this.rng.range(-50, window.innerWidth + 50),
                     -50,
                     this.rng.range(-20, 20), // Small horizontal drift
                     speed, // Vertical speed downward
@@ -2134,7 +2139,7 @@
                 const type = this.rng.next() < 0.6 ? 'boost' : 'life';
                 
                 bonus.init(
-                    this.rng.range(50, this.canvas.width - 50),
+                    this.rng.range(50, window.innerWidth - 50),
                     -30,
                     type
                 );
@@ -2290,22 +2295,20 @@
                 this.player.draw(this.ctx);
                 drawCalls++;
                 
-                // Debug: Always show player position with bright circle
-                if (this.debug.overlay || true) { // Always show for debugging
+                // Debug: Show player position when debug overlay is on
+                if (this.debug.overlay) {
                     this.ctx.save();
-                    this.ctx.strokeStyle = '#FF0000';
-                    this.ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
-                    this.ctx.lineWidth = 3;
+                    this.ctx.strokeStyle = '#FFFF00';
+                    this.ctx.lineWidth = 2;
                     this.ctx.beginPath();
-                    this.ctx.arc(this.player.pos.x, this.player.pos.y, this.player.radius + 5, 0, Math.PI * 2);
+                    this.ctx.arc(this.player.pos.x, this.player.pos.y, this.player.radius + 3, 0, Math.PI * 2);
                     this.ctx.stroke();
-                    this.ctx.fill();
                     
                     // Show coordinates
                     this.ctx.fillStyle = '#FFFFFF';
                     this.ctx.font = '12px Arial';
                     this.ctx.fillText(`Ship: ${Math.round(this.player.pos.x)}, ${Math.round(this.player.pos.y)}`, 
-                                     this.player.pos.x + 30, this.player.pos.y);
+                                     this.player.pos.x + 35, this.player.pos.y);
                     this.ctx.restore();
                 }
                 
