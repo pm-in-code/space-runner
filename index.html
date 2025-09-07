@@ -830,8 +830,8 @@
                     this.invulnerable -= deltaTime;
                 }
                 
-                // Create trail particles
-                if (this.vel.length() > 50) {
+                // Create trail particles - much less frequent for performance
+                if (this.vel.length() > 80 && Math.random() < 0.3) {
                     this.createTrailParticle(game);
                 }
             }
@@ -869,11 +869,11 @@
                 const shipColor = this.boostTime > 0 ? '#FF3FD1' : '#22E1FF';
                 const wingColor = this.boostTime > 0 ? '#7A5CFF' : '#5B8CFF';
                 
-                // Main ship hull - sleek spaceship design
+                // Main ship hull - sleek spaceship design - optimized shadows
                 ctx.strokeStyle = shipColor;
                 ctx.fillStyle = 'rgba(40, 50, 70, 0.9)'; // Dark metallic hull
                 ctx.lineWidth = 3;
-                ctx.shadowBlur = 20;
+                ctx.shadowBlur = 10; // Reduced shadow for performance
                 ctx.shadowColor = shipColor;
                 
                 // Central hull/fuselage
@@ -1068,8 +1068,8 @@
                 const speed = this.vel.length();
                 this.heatGlow = Math.min(speed / 200, 1);
                 
-                // Create atmospheric trail particles
-                if (speed > 50 && Math.random() < 0.8) {
+                // Create atmospheric trail particles - much less frequent for performance
+                if (speed > 100 && Math.random() < 0.15) {
                     this.createTrailParticle(game);
                 }
                 
@@ -1120,20 +1120,16 @@
                 // Get meteor colors based on type
                 const colors = this.getMeteorColors();
                 
-                // Draw atmospheric glow/heating effect
-                if (this.heatGlow > 0.3) {
-                    ctx.globalAlpha = this.heatGlow * 0.8;
-                    const glowSize = this.radius * (1.5 + this.heatGlow * 0.5);
-                    
-                    const glowGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
-                    glowGradient.addColorStop(0, colors.glow);
-                    glowGradient.addColorStop(0.7, colors.glowMid);
-                    glowGradient.addColorStop(1, 'transparent');
-                    
-                    ctx.fillStyle = glowGradient;
+                // Draw atmospheric glow/heating effect - simplified for performance
+                if (this.heatGlow > 0.5) { // Only show when very hot
+                    ctx.globalAlpha = this.heatGlow * 0.6;
+                    ctx.fillStyle = colors.glow;
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = colors.glow;
                     ctx.beginPath();
-                    ctx.arc(0, 0, glowSize, 0, Math.PI * 2);
+                    ctx.arc(0, 0, this.radius * 1.3, 0, Math.PI * 2);
                     ctx.fill();
+                    ctx.shadowBlur = 0;
                     ctx.globalAlpha = 1;
                 }
                 
@@ -1260,7 +1256,7 @@
             
             createDebris(game) {
                 const colors = this.getMeteorColors();
-                const numDebris = 12 + Math.floor(Math.random() * 6);
+                const numDebris = 6 + Math.floor(Math.random() * 3); // Reduced from 12-18 to 6-9
                 
                 for (let i = 0; i < numDebris; i++) {
                     const particle = game.particlePool.get();
@@ -1288,8 +1284,8 @@
                     }
                 }
                 
-                // Add some hot sparks for dramatic effect
-                for (let i = 0; i < 5; i++) {
+                // Add some hot sparks for dramatic effect - reduced for performance
+                for (let i = 0; i < 3; i++) {
                     const spark = game.particlePool.get();
                     const sparkAngle = Math.random() * Math.PI * 2;
                     const sparkSpeed = 200 + Math.random() * 300;
@@ -1387,9 +1383,9 @@
             }
             
             init() {
-                // Create stars for each layer
+                // Create stars for each layer - reduced for performance
                 this.layers.forEach((layer, layerIndex) => {
-                    const density = 150 - layerIndex * 30;
+                    const density = 80 - layerIndex * 20; // Reduced from 150-90 to 80-40
                     for (let i = 0; i < density; i++) {
                         layer.stars.push({
                             x: Math.random() * this.canvas.width,
@@ -1399,8 +1395,8 @@
                     }
                 });
                 
-                // Create nebulae
-                for (let i = 0; i < 3; i++) {
+                // Create nebulae - reduced for performance
+                for (let i = 0; i < 2; i++) {
                     this.nebulae.push({
                         x: Math.random() * this.canvas.width,
                         y: Math.random() * this.canvas.height,
@@ -1836,7 +1832,7 @@
                 this.particlePool = new Pool(
                     () => new Particle(),
                     (particle) => { particle.life = 0; },
-                    100
+                    150 // Increased pool size for better performance
                 );
                 
                 // Systems
