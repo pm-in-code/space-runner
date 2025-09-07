@@ -750,12 +750,25 @@
                 // Update position
                 this.pos.add(new Vector2(this.vel.x * deltaTime, this.vel.y * deltaTime));
                 
-                // Keep in bounds - restrict player to bottom third of screen
-                // Use window dimensions (logical pixels) not canvas dimensions (physical pixels)
-                this.pos.x = Math.max(this.radius, Math.min(window.innerWidth - this.radius, this.pos.x));
+                // Keep in bounds - strict boundary checking for all screen sizes
+                // Use window dimensions (logical pixels) with safety margins
+                const safeMargin = 10; // Extra margin to prevent any edge cases
+                const minX = this.radius + safeMargin;
+                const maxX = window.innerWidth - this.radius - safeMargin;
                 const minY = window.innerHeight * 0.65; // Bottom third of screen
-                const maxY = window.innerHeight - this.radius;
+                const maxY = window.innerHeight - this.radius - safeMargin;
+                
+                // Clamp position strictly within bounds
+                this.pos.x = Math.max(minX, Math.min(maxX, this.pos.x));
                 this.pos.y = Math.max(minY, Math.min(maxY, this.pos.y));
+                
+                // Additional safety check - if somehow still out of bounds, force position
+                if (this.pos.x < minX || this.pos.x > maxX) {
+                    this.pos.x = window.innerWidth / 2; // Reset to center
+                }
+                if (this.pos.y < minY || this.pos.y > maxY) {
+                    this.pos.y = window.innerHeight - 80; // Reset to safe bottom position
+                }
                 
                 // Update invulnerability
                 if (this.invulnerable > 0) {
@@ -798,57 +811,122 @@
                 ctx.translate(this.pos.x, this.pos.y);
                 ctx.rotate(this.angle);
                 
-                // Ship body - bright and visible
-                ctx.strokeStyle = this.boostTime > 0 ? '#FF3FD1' : '#22E1FF';
-                ctx.fillStyle = this.boostTime > 0 ? 'rgba(255, 63, 209, 0.6)' : 'rgba(34, 225, 255, 0.6)';
-                ctx.lineWidth = 5; // Thick lines for visibility
-                ctx.shadowBlur = 25; // Strong glow
-                ctx.shadowColor = ctx.strokeStyle;
+                const shipColor = this.boostTime > 0 ? '#FF3FD1' : '#22E1FF';
+                const wingColor = this.boostTime > 0 ? '#7A5CFF' : '#5B8CFF';
                 
-                // Main ship triangle - well sized and visible
+                // Main ship hull - sleek spaceship design
+                ctx.strokeStyle = shipColor;
+                ctx.fillStyle = 'rgba(40, 50, 70, 0.9)'; // Dark metallic hull
+                ctx.lineWidth = 3;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = shipColor;
+                
+                // Central hull/fuselage
                 ctx.beginPath();
-                ctx.moveTo(30, 0);  // Nose
-                ctx.lineTo(-20, -15); // Left wing
-                ctx.lineTo(-12, 0);   // Center back
-                ctx.lineTo(-20, 15); // Right wing
+                ctx.ellipse(0, 0, 25, 8, 0, 0, Math.PI * 2); // Main body
+                ctx.fill();
+                ctx.stroke();
+                
+                // Cockpit/nose section
+                ctx.fillStyle = this.boostTime > 0 ? 'rgba(255, 63, 209, 0.8)' : 'rgba(34, 225, 255, 0.8)';
+                ctx.strokeStyle = shipColor;
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 15;
+                
+                ctx.beginPath();
+                ctx.ellipse(15, 0, 12, 5, 0, 0, Math.PI * 2); // Cockpit
+                ctx.fill();
+                ctx.stroke();
+                
+                // Wings - swept back design
+                ctx.fillStyle = 'rgba(60, 70, 90, 0.8)';
+                ctx.strokeStyle = wingColor;
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 12;
+                
+                // Left wing
+                ctx.beginPath();
+                ctx.moveTo(-5, -8);
+                ctx.lineTo(-22, -18);
+                ctx.lineTo(-18, -12);
+                ctx.lineTo(-8, -8);
                 ctx.closePath();
                 ctx.fill();
                 ctx.stroke();
                 
-                // Ship core glow
-                ctx.fillStyle = ctx.strokeStyle;
-                ctx.shadowBlur = 15;
+                // Right wing
                 ctx.beginPath();
-                ctx.arc(0, 0, 3, 0, Math.PI * 2);
+                ctx.moveTo(-5, 8);
+                ctx.lineTo(-22, 18);
+                ctx.lineTo(-18, 12);
+                ctx.lineTo(-8, 8);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                
+                // Engine nacelles
+                ctx.fillStyle = 'rgba(80, 90, 110, 0.9)';
+                ctx.strokeStyle = wingColor;
+                ctx.lineWidth = 2;
+                
+                // Left engine
+                ctx.beginPath();
+                ctx.ellipse(-15, -10, 8, 3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Right engine
+                ctx.beginPath();
+                ctx.ellipse(-15, 10, 8, 3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Cockpit details - viewport
+                ctx.fillStyle = this.boostTime > 0 ? 'rgba(255, 255, 255, 0.9)' : 'rgba(173, 216, 230, 0.9)';
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.ellipse(18, 0, 6, 3, 0, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Wing lights for better visibility
-                ctx.shadowBlur = 10;
+                // Navigation lights on wings
+                ctx.shadowBlur = 8;
+                ctx.fillStyle = '#00FF00'; // Green starboard
                 ctx.beginPath();
-                ctx.arc(-8, -6, 1.5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(-8, 6, 1.5, 0, Math.PI * 2);
+                ctx.arc(-18, -15, 1.5, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Engine glow - always visible when moving
+                ctx.fillStyle = '#FF0000'; // Red port
+                ctx.beginPath();
+                ctx.arc(-18, 15, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Engine glow effects
                 if (this.vel.length() > 10) {
                     const glowIntensity = Math.min(this.vel.length() / this.maxSpeed, 1);
-                    ctx.fillStyle = this.boostTime > 0 ? '#FF3FD1' : '#5B8CFF';
-                    ctx.shadowBlur = 25 * glowIntensity;
-                    ctx.shadowColor = ctx.fillStyle;
-                    ctx.globalAlpha = 0.9 * glowIntensity;
+                    const engineColor = this.boostTime > 0 ? '#FF3FD1' : '#00BFFF';
                     
-                    // Main engine
+                    ctx.fillStyle = engineColor;
+                    ctx.shadowBlur = 20 * glowIntensity;
+                    ctx.shadowColor = engineColor;
+                    ctx.globalAlpha = 0.8 * glowIntensity;
+                    
+                    // Left engine exhaust
                     ctx.beginPath();
-                    ctx.arc(-12, 0, 6 * glowIntensity, 0, Math.PI * 2);
+                    ctx.ellipse(-23, -10, 4 * glowIntensity, 2 * glowIntensity, 0, 0, Math.PI * 2);
                     ctx.fill();
                     
-                    // Engine trail particles effect
+                    // Right engine exhaust
+                    ctx.beginPath();
+                    ctx.ellipse(-23, 10, 4 * glowIntensity, 2 * glowIntensity, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Boost mode - central thruster
                     if (this.boostTime > 0) {
-                        ctx.globalAlpha = 0.6;
+                        ctx.globalAlpha = 0.9;
+                        ctx.fillStyle = '#FFD700';
+                        ctx.shadowColor = '#FFD700';
                         ctx.beginPath();
-                        ctx.arc(-18, 0, 8 * glowIntensity, 0, Math.PI * 2);
+                        ctx.ellipse(-20, 0, 6 * glowIntensity, 3 * glowIntensity, 0, 0, Math.PI * 2);
                         ctx.fill();
                     }
                 }
@@ -1743,10 +1821,14 @@
                             this.player.pos.x = window.innerWidth / 2;
                             this.player.pos.y = window.innerHeight - 80;
                         } else {
-                            // Keep within bounds during resize
-                            this.player.pos.x = Math.min(this.player.pos.x, window.innerWidth - this.player.radius);
+                            // Keep within bounds during resize - strict clamping
+                            const safeMargin = 10;
+                            const minX = this.player.radius + safeMargin;
+                            const maxX = window.innerWidth - this.player.radius - safeMargin;
                             const minY = window.innerHeight * 0.65;
-                            const maxY = window.innerHeight - this.player.radius;
+                            const maxY = window.innerHeight - this.player.radius - safeMargin;
+                            
+                            this.player.pos.x = Math.max(minX, Math.min(maxX, this.player.pos.x));
                             this.player.pos.y = Math.max(minY, Math.min(maxY, this.player.pos.y));
                         }
                     }
@@ -1817,14 +1899,15 @@
                     knob.style.left = (pos.x - 20) + 'px';
                     knob.style.top = (pos.y - 20) + 'px';
                     
-                    // Update input
+                    // Update input with stricter deadzone to prevent edge cases
                     const normalizedX = (pos.x - stickCenter.x) / maxDistance;
                     const normalizedY = (pos.y - stickCenter.y) / maxDistance;
+                    const deadzone = 0.25; // Increased deadzone for more precision
                     
-                    this.input.left = normalizedX < -0.3;
-                    this.input.right = normalizedX > 0.3;
-                    this.input.up = normalizedY < -0.3;
-                    this.input.down = normalizedY > 0.3;
+                    this.input.left = normalizedX < -deadzone;
+                    this.input.right = normalizedX > deadzone;
+                    this.input.up = normalizedY < -deadzone;
+                    this.input.down = normalizedY > deadzone;
                 };
                 
                 const resetStick = () => {
