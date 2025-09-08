@@ -753,9 +753,9 @@
             constructor(x, y) {
                 this.pos = new Vector2(x, y);
                 this.vel = new Vector2();
-                this.acceleration = 800;
-                this.maxSpeed = 300;
-                this.friction = 0.85;
+                this.acceleration = 1200; // Increased from 800
+                this.maxSpeed = 450; // Increased from 300
+                this.friction = 0.88; // Increased friction for better control at high speed
                 this.radius = 30; // Good visible size
                 this.angle = 0;
                 this.boostTime = 0;
@@ -830,8 +830,8 @@
                     this.invulnerable -= deltaTime;
                 }
                 
-                // Create trail particles - heavily optimized frequency
-                if (this.vel.length() > 80 && Math.random() < 0.08) { // Much lower frequency
+                // Create trail particles - extremely rare for maximum performance
+                if (this.vel.length() > 100 && Math.random() < 0.03) { // Extremely low frequency
                     this.createTrailParticle(game);
                 }
             }
@@ -955,34 +955,28 @@
                 ctx.arc(-18, 15, 1.5, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Engine glow effects - no shadows for performance
-                if (this.vel.length() > 20) { // Higher threshold
-                    const glowIntensity = Math.min(this.vel.length() / this.maxSpeed, 1);
-                    const engineColor = this.boostTime > 0 ? '#FF3FD1' : '#00BFFF';
-                    
-                    ctx.fillStyle = engineColor;
-                    ctx.globalAlpha = 0.5 * glowIntensity;
-                    
-                    // Simple engine exhaust - no shadows
-                    ctx.beginPath();
-                    ctx.ellipse(-23, -10, 2.5 * glowIntensity, 1.2 * glowIntensity, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.beginPath();
-                    ctx.ellipse(-23, 10, 2.5 * glowIntensity, 1.2 * glowIntensity, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Boost mode - central thruster
-                    if (this.boostTime > 0) {
-                        ctx.globalAlpha = 0.6;
-                        ctx.fillStyle = '#FFD700';
-                        ctx.beginPath();
-                        ctx.ellipse(-20, 0, 3.5 * glowIntensity, 1.8 * glowIntensity, 0, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    
-                    ctx.globalAlpha = 1;
-                }
+                // Engine glow effects - DISABLED for maximum performance
+                // All engine effects removed for smooth gameplay
+                // if (this.vel.length() > 20) {
+                //     const glowIntensity = Math.min(this.vel.length() / this.maxSpeed, 1);
+                //     const engineColor = this.boostTime > 0 ? '#FF3FD1' : '#00BFFF';
+                //     ctx.fillStyle = engineColor;
+                //     ctx.globalAlpha = 0.5 * glowIntensity;
+                //     ctx.beginPath();
+                //     ctx.ellipse(-23, -10, 2.5 * glowIntensity, 1.2 * glowIntensity, 0, 0, Math.PI * 2);
+                //     ctx.fill();
+                //     ctx.beginPath();
+                //     ctx.ellipse(-23, 10, 2.5 * glowIntensity, 1.2 * glowIntensity, 0, 0, Math.PI * 2);
+                //     ctx.fill();
+                //     if (this.boostTime > 0) {
+                //         ctx.globalAlpha = 0.6;
+                //         ctx.fillStyle = '#FFD700';
+                //         ctx.beginPath();
+                //         ctx.ellipse(-20, 0, 3.5 * glowIntensity, 1.8 * glowIntensity, 0, 0, Math.PI * 2);
+                //         ctx.fill();
+                //     }
+                //     ctx.globalAlpha = 1;
+                // }
                 
                 ctx.restore();
             }
@@ -1165,41 +1159,38 @@
                 ctx.fill();
                 ctx.stroke();
                 
-                // Draw surface craters for texture - minimal for performance
-                ctx.fillStyle = colors.crater;
-                ctx.globalAlpha = 0.4;
-                // Only draw first 2 craters for performance
-                for (let i = 0; i < Math.min(2, this.craters.length); i++) {
-                    const crater = this.craters[i];
-                    ctx.beginPath();
-                    ctx.arc(crater.x, crater.y, crater.size, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                ctx.globalAlpha = 1;
+                // Draw surface craters - DISABLED for maximum performance
+                // Craters are too expensive for smooth gameplay
+                // ctx.fillStyle = colors.crater;
+                // ctx.globalAlpha = 0.4;
+                // for (let i = 0; i < Math.min(2, this.craters.length); i++) {
+                //     const crater = this.craters[i];
+                //     ctx.beginPath();
+                //     ctx.arc(crater.x, crater.y, crater.size, 0, Math.PI * 2);
+                //     ctx.fill();
+                // }
+                // ctx.globalAlpha = 1;
                 
-                // Draw bright spots (mineral veins) - simplified, no random calls in draw
-                if (this.meteorType === 'iron' && this.radius > 25) { // Only for larger meteors
-                    ctx.fillStyle = colors.vein;
-                    ctx.globalAlpha = 0.6;
-                    // Fixed position vein for performance (no Math.random in draw loop)
-                    ctx.beginPath();
-                    ctx.arc(this.radius * 0.2, -this.radius * 0.3, 1.2, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.globalAlpha = 1;
-                }
+                // Draw bright spots (mineral veins) - DISABLED for maximum performance
+                // if (this.meteorType === 'iron' && this.radius > 25) {
+                //     ctx.fillStyle = colors.vein;
+                //     ctx.globalAlpha = 0.6;
+                //     ctx.beginPath();
+                //     ctx.arc(this.radius * 0.2, -this.radius * 0.3, 1.2, 0, Math.PI * 2);
+                //     ctx.fill();
+                //     ctx.globalAlpha = 1;
+                // }
                 
-                // Heat glow on the surface for very fast meteors - no shadows for performance
-                if (this.heatGlow > 0.8) { // Only for extremely fast meteors
-                    ctx.globalAlpha = this.heatGlow * 0.3;
-                    ctx.strokeStyle = colors.heat;
-                    ctx.lineWidth = 1;
-                    
-                    ctx.beginPath();
-                    ctx.arc(0, 0, this.radius * 0.9, 0, Math.PI * 2);
-                    ctx.stroke();
-                    
-                    ctx.globalAlpha = 1;
-                }
+                // Heat glow - DISABLED for maximum performance
+                // if (this.heatGlow > 0.8) {
+                //     ctx.globalAlpha = this.heatGlow * 0.3;
+                //     ctx.strokeStyle = colors.heat;
+                //     ctx.lineWidth = 1;
+                //     ctx.beginPath();
+                //     ctx.arc(0, 0, this.radius * 0.9, 0, Math.PI * 2);
+                //     ctx.stroke();
+                //     ctx.globalAlpha = 1;
+                // }
                 
                 ctx.restore();
             }
@@ -2248,7 +2239,7 @@
             spawnMeteor() {
                 const meteor = this.meteorPool.get();
                 const size = 20 + this.rng.range(0, 20);
-                const speed = (100 + this.rng.range(0, 100)) * this.speedMultiplier;
+                const speed = (200 + this.rng.range(0, 150)) * this.speedMultiplier; // Increased from 100-200 to 200-350
                 
                 meteor.init(
                     this.rng.range(-50, window.innerWidth + 50),
@@ -2322,16 +2313,16 @@
                     this.lives++;
                 }
                 
-                // Create collection effect - heavily optimized
-                for (let i = 0; i < 2; i++) { // Reduced from 3 to 2
-                    const particle = this.particlePool.get();
-                    const angle = i * Math.PI; // Simplified angle calculation
-                    particle.pos.set(bonus.pos.x, bonus.pos.y);
-                    particle.vel.set(Math.cos(angle) * 80, Math.sin(angle) * 80); // Reduced speed
-                    particle.life = particle.maxLife = 0.25; // Very short life
-                    particle.size = 1.5; // Smaller size
-                    particle.color = bonus.type === 'boost' ? '#FF3FD1' : '#22E1FF';
-                }
+                // Create collection effect - DISABLED for maximum performance
+                // for (let i = 0; i < 2; i++) {
+                //     const particle = this.particlePool.get();
+                //     const angle = i * Math.PI;
+                //     particle.pos.set(bonus.pos.x, bonus.pos.y);
+                //     particle.vel.set(Math.cos(angle) * 80, Math.sin(angle) * 80);
+                //     particle.life = particle.maxLife = 0.25;
+                //     particle.size = 1.5;
+                //     particle.color = bonus.type === 'boost' ? '#FF3FD1' : '#22E1FF';
+                // }
                 
                 this.bonusPool.release(bonus);
             }
