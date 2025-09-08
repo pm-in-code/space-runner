@@ -830,10 +830,11 @@
                     this.invulnerable -= deltaTime;
                 }
                 
-                // Create trail particles - extremely rare for maximum performance
-                if (this.vel.length() > 100 && Math.random() < 0.03) { // Extremely low frequency
-                    this.createTrailParticle(game);
-                }
+                // Create trail particles - COMPLETELY DISABLED for ultimate smoothness
+                // Even rare particles can cause micro-stutters
+                // if (this.vel.length() > 100 && Math.random() < 0.03) {
+                //     this.createTrailParticle(game);
+                // }
             }
             
             createTrailParticle(game) {
@@ -869,35 +870,35 @@
                 const shipColor = this.boostTime > 0 ? '#FF3FD1' : '#22E1FF';
                 const wingColor = this.boostTime > 0 ? '#7A5CFF' : '#5B8CFF';
                 
-                // Main ship hull - sleek spaceship design - optimized shadows
-                ctx.strokeStyle = shipColor;
-                ctx.fillStyle = 'rgba(40, 50, 70, 0.9)'; // Dark metallic hull
-                ctx.lineWidth = 3;
-                ctx.shadowBlur = 10; // Reduced shadow for performance
-                ctx.shadowColor = shipColor;
+                // Main ship hull - optimized for maximum smoothness
+                ctx.fillStyle = shipColor; // Use ship color directly instead of dark hull
+                // ctx.strokeStyle = shipColor; // DISABLED stroke for performance
+                // ctx.lineWidth = 3;
+                // ctx.shadowBlur = 10; // DISABLED shadows for ultimate smoothness  
+                // ctx.shadowColor = shipColor;
                 
                 // Central hull/fuselage
                 ctx.beginPath();
                 ctx.ellipse(0, 0, 25, 8, 0, 0, Math.PI * 2); // Main body
                 ctx.fill();
-                ctx.stroke();
+                // ctx.stroke(); // DISABLED for ultimate smoothness
                 
-                // Cockpit/nose section
+                // Cockpit/nose section - simplified for performance
                 ctx.fillStyle = this.boostTime > 0 ? 'rgba(255, 63, 209, 0.8)' : 'rgba(34, 225, 255, 0.8)';
-                ctx.strokeStyle = shipColor;
-                ctx.lineWidth = 2;
-                ctx.shadowBlur = 15;
+                // ctx.strokeStyle = shipColor; // DISABLED stroke
+                // ctx.lineWidth = 2;
+                // ctx.shadowBlur = 15; // DISABLED shadows
                 
                 ctx.beginPath();
                 ctx.ellipse(15, 0, 12, 5, 0, 0, Math.PI * 2); // Cockpit
                 ctx.fill();
-                ctx.stroke();
+                // ctx.stroke(); // DISABLED stroke
                 
-                // Wings - swept back design
-                ctx.fillStyle = 'rgba(60, 70, 90, 0.8)';
-                ctx.strokeStyle = wingColor;
-                ctx.lineWidth = 2;
-                ctx.shadowBlur = 12;
+                // Wings - simplified for performance
+                ctx.fillStyle = wingColor; // Use wing color directly
+                // ctx.strokeStyle = wingColor; // DISABLED stroke
+                // ctx.lineWidth = 2;
+                // ctx.shadowBlur = 12; // DISABLED shadows
                 
                 // Left wing
                 ctx.beginPath();
@@ -907,7 +908,7 @@
                 ctx.lineTo(-8, -8);
                 ctx.closePath();
                 ctx.fill();
-                ctx.stroke();
+                // ctx.stroke(); // DISABLED stroke
                 
                 // Right wing
                 ctx.beginPath();
@@ -917,34 +918,34 @@
                 ctx.lineTo(-8, 8);
                 ctx.closePath();
                 ctx.fill();
-                ctx.stroke();
+                // ctx.stroke(); // DISABLED stroke
                 
-                // Engine nacelles
-                ctx.fillStyle = 'rgba(80, 90, 110, 0.9)';
-                ctx.strokeStyle = wingColor;
-                ctx.lineWidth = 2;
+                // Engine nacelles - simplified
+                ctx.fillStyle = wingColor; // Use wing color directly
+                // ctx.strokeStyle = wingColor; // DISABLED stroke
+                // ctx.lineWidth = 2;
                 
                 // Left engine
                 ctx.beginPath();
                 ctx.ellipse(-15, -10, 8, 3, 0, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.stroke();
+                // ctx.stroke(); // DISABLED stroke
                 
                 // Right engine
                 ctx.beginPath();
                 ctx.ellipse(-15, 10, 8, 3, 0, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.stroke();
+                // ctx.stroke(); // DISABLED stroke
                 
                 // Cockpit details - viewport
                 ctx.fillStyle = this.boostTime > 0 ? 'rgba(255, 255, 255, 0.9)' : 'rgba(173, 216, 230, 0.9)';
-                ctx.shadowBlur = 8;
+                // ctx.shadowBlur = 8; // DISABLED shadows
                 ctx.beginPath();
                 ctx.ellipse(18, 0, 6, 3, 0, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Navigation lights on wings
-                ctx.shadowBlur = 8;
+                // Navigation lights on wings - no shadows for performance
+                // ctx.shadowBlur = 8; // DISABLED shadows
                 ctx.fillStyle = '#00FF00'; // Green starboard
                 ctx.beginPath();
                 ctx.arc(-18, -15, 1.5, 0, Math.PI * 2);
@@ -1017,11 +1018,11 @@
                 this.vertices = [];
                 this.craters = [];
                 
-                // Generate irregular rocky shape
-                const numVertices = 8 + Math.floor(Math.random() * 6);
+                // Generate simple rocky shape - fewer vertices for performance
+                const numVertices = 6 + Math.floor(Math.random() * 3); // Reduced from 8-14 to 6-9
                 for (let i = 0; i < numVertices; i++) {
                     const angle = (i / numVertices) * Math.PI * 2;
-                    const variance = 0.6 + Math.random() * 0.4;
+                    const variance = 0.7 + Math.random() * 0.3; // Less variance for simpler shapes
                     this.vertices.push({
                         x: Math.cos(angle) * this.radius * variance,
                         y: Math.sin(angle) * this.radius * variance
@@ -1142,10 +1143,10 @@
                 }
                 
                 ctx.fillStyle = this.cachedGradient;
-                ctx.strokeStyle = colors.edge;
-                ctx.lineWidth = 1.5;
+                // ctx.strokeStyle = colors.edge; // DISABLED stroke for performance
+                // ctx.lineWidth = 1.5;
                 
-                // Draw irregular meteor shape
+                // Draw irregular meteor shape - fill only for maximum performance
                 ctx.beginPath();
                 for (let i = 0; i < this.vertices.length; i++) {
                     const vertex = this.vertices[i];
@@ -1157,7 +1158,7 @@
                 }
                 ctx.closePath();
                 ctx.fill();
-                ctx.stroke();
+                // ctx.stroke(); // DISABLED for ultimate smoothness
                 
                 // Draw surface craters - DISABLED for maximum performance
                 // Craters are too expensive for smooth gameplay
@@ -1802,11 +1803,11 @@
                 this.player = new Player(0, 0); // Temporary position
                 this.rng = new RNG();
                 
-                // Object pools
+                // Object pools - increased meteor pool for 3x spawn rate
                 this.meteorPool = new Pool(
                     () => new Meteor(),
                     (meteor) => {},
-                    20
+                    40 // Doubled from 20 to handle 3x spawn rate
                 );
                 this.bonusPool = new Pool(
                     () => new Bonus(),
@@ -2187,9 +2188,9 @@
                 // Update starfield
                 this.starfield.update(this.deltaTime, this.speedMultiplier);
                 
-                // Spawn meteors - much slower for performance
+                // Spawn meteors - TRIPLED frequency for intense gameplay
                 this.meteorSpawnTimer += this.deltaTime;
-                const meteorSpawnRate = 3.0 - (this.speedLevel - 1) * 0.2; // Much slower spawning
+                const meteorSpawnRate = 1.0 - (this.speedLevel - 1) * 0.1; // 3x faster than before (was 3.0)
                 if (this.meteorSpawnTimer >= meteorSpawnRate) {
                     this.meteorSpawnTimer = 0;
                     this.spawnMeteor();
@@ -2220,14 +2221,14 @@
                     return true;
                 });
                 
-                // Update particles - enabled for ship trails
-                this.particlePool.active = this.particlePool.active.filter(particle => {
-                    if (!particle.update(this.deltaTime)) {
-                        this.particlePool.release(particle);
-                        return false;
-                    }
-                    return true;
-                });
+                // Update particles - COMPLETELY DISABLED for ultimate smoothness
+                // this.particlePool.active = this.particlePool.active.filter(particle => {
+                //     if (!particle.update(this.deltaTime)) {
+                //         this.particlePool.release(particle);
+                //         return false;
+                //     }
+                //     return true;
+                // });
                 
                 // Check collisions
                 this.checkCollisions();
@@ -2298,7 +2299,7 @@
             }
             
             handleMeteorCollision(meteor) {
-                meteor.createDebris(this); // Re-enabled with optimized debris
+                // meteor.createDebris(this); // DISABLED for ultimate smoothness
                 this.meteorPool.release(meteor);
                 this.showQuiz();
             }
@@ -2399,11 +2400,11 @@
                     }
                 });
                 
-                // Draw particles - enabled for ship trails
-                this.particlePool.active.forEach(particle => {
-                    particle.draw(this.ctx);
-                    drawCalls++;
-                });
+                // Draw particles - COMPLETELY DISABLED for ultimate smoothness
+                // this.particlePool.active.forEach(particle => {
+                //     particle.draw(this.ctx);
+                //     drawCalls++;
+                // });
                 
                 // Draw player
                 this.player.draw(this.ctx);
