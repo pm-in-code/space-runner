@@ -830,8 +830,8 @@
                     this.invulnerable -= deltaTime;
                 }
                 
-                // Create trail particles - optimized for performance
-                if (this.vel.length() > 60 && Math.random() < 0.2) {
+                // Create trail particles - heavily optimized frequency
+                if (this.vel.length() > 80 && Math.random() < 0.08) { // Much lower frequency
                     this.createTrailParticle(game);
                 }
             }
@@ -850,8 +850,8 @@
                     Math.cos(angle) * speed,
                     Math.sin(angle) * speed
                 );
-                particle.life = particle.maxLife = 0.5 + Math.random() * 0.5;
-                particle.size = 2 + Math.random() * 3;
+                particle.life = particle.maxLife = 0.3 + Math.random() * 0.2; // Shorter life
+                particle.size = 1.5 + Math.random() * 1.5; // Smaller size
                 particle.color = this.boostTime > 0 ? '#FF3FD1' : '#22E1FF';
             }
             
@@ -955,36 +955,32 @@
                 ctx.arc(-18, 15, 1.5, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Engine glow effects - simplified for performance
-                if (this.vel.length() > 15) {
+                // Engine glow effects - no shadows for performance
+                if (this.vel.length() > 20) { // Higher threshold
                     const glowIntensity = Math.min(this.vel.length() / this.maxSpeed, 1);
                     const engineColor = this.boostTime > 0 ? '#FF3FD1' : '#00BFFF';
                     
                     ctx.fillStyle = engineColor;
-                    ctx.shadowBlur = 8 * glowIntensity;
-                    ctx.shadowColor = engineColor;
-                    ctx.globalAlpha = 0.6 * glowIntensity;
+                    ctx.globalAlpha = 0.5 * glowIntensity;
                     
-                    // Simple engine exhaust
+                    // Simple engine exhaust - no shadows
                     ctx.beginPath();
-                    ctx.ellipse(-23, -10, 3 * glowIntensity, 1.5 * glowIntensity, 0, 0, Math.PI * 2);
+                    ctx.ellipse(-23, -10, 2.5 * glowIntensity, 1.2 * glowIntensity, 0, 0, Math.PI * 2);
                     ctx.fill();
                     
                     ctx.beginPath();
-                    ctx.ellipse(-23, 10, 3 * glowIntensity, 1.5 * glowIntensity, 0, 0, Math.PI * 2);
+                    ctx.ellipse(-23, 10, 2.5 * glowIntensity, 1.2 * glowIntensity, 0, 0, Math.PI * 2);
                     ctx.fill();
                     
                     // Boost mode - central thruster
                     if (this.boostTime > 0) {
-                        ctx.globalAlpha = 0.7;
+                        ctx.globalAlpha = 0.6;
                         ctx.fillStyle = '#FFD700';
-                        ctx.shadowColor = '#FFD700';
                         ctx.beginPath();
-                        ctx.ellipse(-20, 0, 4 * glowIntensity, 2 * glowIntensity, 0, 0, Math.PI * 2);
+                        ctx.ellipse(-20, 0, 3.5 * glowIntensity, 1.8 * glowIntensity, 0, 0, Math.PI * 2);
                         ctx.fill();
                     }
                     
-                    ctx.shadowBlur = 0;
                     ctx.globalAlpha = 1;
                 }
                 
@@ -1018,6 +1014,8 @@
                 this.trailParticles = [];
                 this.heatGlow = 0;
                 this.meteorType = 'rock'; // 'rock', 'iron', 'ice'
+                this.cachedGradient = null; // Cache gradient for performance
+                this.gradientCreated = false;
                 this.generateShape();
             }
             
@@ -1059,6 +1057,8 @@
                 this.radius = size;
                 this.angle = 0;
                 this.angularVel = (Math.random() - 0.5) * 4;
+                this.gradientCreated = false; // Reset gradient cache
+                this.cachedGradient = null;
                 this.generateShape();
             }
             
@@ -1135,16 +1135,19 @@
                 //     ctx.globalAlpha = 1;
                 // }
                 
-                // Draw main meteor body with simple gradient
-                const bodyGradient = ctx.createRadialGradient(
-                    -this.radius * 0.2, -this.radius * 0.2, 0,
-                    0, 0, this.radius
-                );
-                bodyGradient.addColorStop(0, colors.highlight);
-                bodyGradient.addColorStop(0.7, colors.main);
-                bodyGradient.addColorStop(1, colors.shadow);
+                // Draw main meteor body with cached gradient for performance
+                if (!this.gradientCreated || !this.cachedGradient) {
+                    this.cachedGradient = ctx.createRadialGradient(
+                        -this.radius * 0.2, -this.radius * 0.2, 0,
+                        0, 0, this.radius
+                    );
+                    this.cachedGradient.addColorStop(0, colors.highlight);
+                    this.cachedGradient.addColorStop(0.7, colors.main);
+                    this.cachedGradient.addColorStop(1, colors.shadow);
+                    this.gradientCreated = true;
+                }
                 
-                ctx.fillStyle = bodyGradient;
+                ctx.fillStyle = this.cachedGradient;
                 ctx.strokeStyle = colors.edge;
                 ctx.lineWidth = 1.5;
                 
@@ -1162,11 +1165,11 @@
                 ctx.fill();
                 ctx.stroke();
                 
-                // Draw surface craters for texture - optimized (fewer craters)
+                // Draw surface craters for texture - minimal for performance
                 ctx.fillStyle = colors.crater;
-                ctx.globalAlpha = 0.5;
-                // Only draw first 3 craters for performance
-                for (let i = 0; i < Math.min(3, this.craters.length); i++) {
+                ctx.globalAlpha = 0.4;
+                // Only draw first 2 craters for performance
+                for (let i = 0; i < Math.min(2, this.craters.length); i++) {
                     const crater = this.craters[i];
                     ctx.beginPath();
                     ctx.arc(crater.x, crater.y, crater.size, 0, Math.PI * 2);
@@ -1174,32 +1177,27 @@
                 }
                 ctx.globalAlpha = 1;
                 
-                // Draw bright spots (mineral veins) - only for iron meteors, optimized
-                if (this.meteorType === 'iron' && Math.random() < 0.4) {
+                // Draw bright spots (mineral veins) - simplified, no random calls in draw
+                if (this.meteorType === 'iron' && this.radius > 25) { // Only for larger meteors
                     ctx.fillStyle = colors.vein;
-                    ctx.globalAlpha = 0.7;
-                    // Only 1 vein for performance
-                    const veinX = (Math.random() - 0.5) * this.radius * 0.6;
-                    const veinY = (Math.random() - 0.5) * this.radius * 0.6;
+                    ctx.globalAlpha = 0.6;
+                    // Fixed position vein for performance (no Math.random in draw loop)
                     ctx.beginPath();
-                    ctx.arc(veinX, veinY, 1.5, 0, Math.PI * 2);
+                    ctx.arc(this.radius * 0.2, -this.radius * 0.3, 1.2, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.globalAlpha = 1;
                 }
                 
-                // Heat glow on the surface for very fast meteors - simplified
-                if (this.heatGlow > 0.7) {
-                    ctx.globalAlpha = this.heatGlow * 0.4;
+                // Heat glow on the surface for very fast meteors - no shadows for performance
+                if (this.heatGlow > 0.8) { // Only for extremely fast meteors
+                    ctx.globalAlpha = this.heatGlow * 0.3;
                     ctx.strokeStyle = colors.heat;
-                    ctx.lineWidth = 1.5;
-                    ctx.shadowBlur = 4;
-                    ctx.shadowColor = colors.heat;
+                    ctx.lineWidth = 1;
                     
                     ctx.beginPath();
                     ctx.arc(0, 0, this.radius * 0.9, 0, Math.PI * 2);
                     ctx.stroke();
                     
-                    ctx.shadowBlur = 0;
                     ctx.globalAlpha = 1;
                 }
                 
@@ -2324,14 +2322,14 @@
                     this.lives++;
                 }
                 
-                // Create collection effect - simplified for performance
-                for (let i = 0; i < 3; i++) { // Reduced from 5 to 3
+                // Create collection effect - heavily optimized
+                for (let i = 0; i < 2; i++) { // Reduced from 3 to 2
                     const particle = this.particlePool.get();
-                    const angle = (i / 3) * Math.PI * 2;
+                    const angle = i * Math.PI; // Simplified angle calculation
                     particle.pos.set(bonus.pos.x, bonus.pos.y);
-                    particle.vel.set(Math.cos(angle) * 100, Math.sin(angle) * 100); // Reduced speed
-                    particle.life = particle.maxLife = 0.4; // Shorter life
-                    particle.size = 2; // Smaller size
+                    particle.vel.set(Math.cos(angle) * 80, Math.sin(angle) * 80); // Reduced speed
+                    particle.life = particle.maxLife = 0.25; // Very short life
+                    particle.size = 1.5; // Smaller size
                     particle.color = bonus.type === 'boost' ? '#FF3FD1' : '#22E1FF';
                 }
                 
